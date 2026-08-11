@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngVibe - Quản Lý Từ Vựng & Dark Mode</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Cấu hình Tailwind hỗ trợ class 'dark'
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between transition-colors duration-300">
+
+    <!-- Header / Navigation -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-colors duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white text-xl font-bold shadow-md shadow-indigo-200 dark:shadow-none">
+                    E
+                </div>
+                <span class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">EngVibe</span>
+            </div>
+
+            <div class="flex items-center space-x-3 md:space-x-4">
+                <!-- Nút chuyển đổi Dark / Light Mode -->
+                <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-600 dark:text-amber-400 transition-all duration-300" title="Đổi giao diện Sáng / Tối">
+                    <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+                </button>
+
+                <!-- Streak -->
+                <div class="flex items-center space-x-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-3 py-1.5 rounded-full" title="Chuỗi ngày học">
+                    <i class="fa-solid fa-fire text-amber-500 text-sm"></i>
+                    <span class="font-bold text-amber-700 dark:text-amber-400 text-xs md:text-sm">7 Ngày</span>
+                </div>
+
+                <!-- XP -->
+                <div class="flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 px-3 py-1.5 rounded-full" title="Điểm kinh nghiệm">
+                    <i class="fa-solid fa-bolt text-indigo-600 dark:text-indigo-400 text-sm"></i>
+                    <span class="font-bold text-indigo-700 dark:text-indigo-300 text-xs md:text-sm" id="user-xp">1,250 XP</span>
+                </div>
+
+                <!-- Profile Button -->
+                <button onclick="switchTab('profile')" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-600 dark:text-slate-200 transition-colors" title="Trang cá nhân">
+                    <i class="fa-solid fa-user text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-6 flex-1 w-full">
+        
+        <!-- Navigation Tabs -->
+        <div class="flex justify-center mb-6 overflow-x-auto">
+            <div class="bg-slate-200/80 dark:bg-slate-800 p-1.5 rounded-2xl flex space-x-1 shadow-inner text-xs md:text-sm font-semibold transition-colors">
+                <button id="nav-flashcards" onclick="switchTab('flashcards')" class="px-4 py-2 rounded-xl transition-all duration-200 bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm">
+                    <i class="fa-solid fa-layer-group mr-1.5"></i>Thẻ Nhớ
+                </button>
+                <button id="nav-dictionary" onclick="switchTab('dictionary')" class="px-4 py-2 rounded-xl transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i class="fa-solid fa-folder-closed mr-1.5"></i>Kho Thư Mục
+                </button>
+                <button id="nav-test" onclick="switchTab('test')" class="px-4 py-2 rounded-xl transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i class="fa-solid fa-pen-to-square mr-1.5"></i>Kiểm Tra
+                </button>
+                <button id="nav-profile" onclick="switchTab('profile')" class="px-4 py-2 rounded-xl transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i class="fa-solid fa-user-gear mr-1.5"></i>Tài Khoản
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 1: FLASHCARDS -->
+        <section id="sec-flashcards" class="space-y-6">
+            <div class="flex items-center justify-between text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
+                <span id="card-counter">Thẻ 1 / 3</span>
+                <span class="text-indigo-600 dark:text-indigo-400 font-semibold" id="card-folder-tag">Tất cả chủ đề</span>
+            </div>
+
+            <div class="perspective-1000 w-full h-[340px] cursor-pointer" onclick="flipCard()">
+                <div id="flashcard-inner" class="transform-style-3d w-full h-full relative rounded-3xl shadow-xl shadow-indigo-100 dark:shadow-none">
+                    <!-- Front -->
+                    <div class="backface-hidden absolute inset-0 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 flex flex-col justify-between items-center text-center transition-colors">
+                        <div class="w-full flex justify-between items-center text-slate-400 dark:text-slate-500">
+                            <span class="text-xs uppercase tracking-wider font-semibold bg-slate-100 dark:bg-slate-700 dark:text-slate-300 px-3 py-1 rounded-full">Từ vựng</span>
+                            <button onclick="event.stopPropagation(); speakWord();" class="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 transition-colors">
+                                <i class="fa-solid fa-volume-high text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="my-auto">
+                            <h2 id="card-word" class="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight mb-2">Eloquent</h2>
+                            <p id="card-phonetic" class="text-lg text-slate-400 dark:text-slate-400 font-mono">/ˈel.ə.kwənt/</p>
+                        </div>
+
+                        <div class="text-xs text-slate-400 dark:text-slate-500 flex items-center">
+                            <i class="fa-solid fa-rotate mr-1.5"></i> Nhấp để lật mặt sau
+                        </div>
+                    </div>
+
+                    <!-- Back -->
+                    <div class="backface-hidden rotate-y-180 absolute inset-0 bg-gradient-to-br from-indigo-600 to-violet-700 dark:from-indigo-700 dark:to-violet-900 text-white rounded-3xl p-8 flex flex-col justify-between items-center text-center">
+                        <div class="w-full flex justify-start">
+                            <span class="text-xs uppercase tracking-wider font-semibold bg-white/20 px-3 py-1 rounded-full text-indigo-100">Giải nghĩa</span>
+                        </div>
+
+                        <div class="my-auto space-y-3">
+                            <h3 id="card-meaning" class="text-2xl font-bold">Hùng hồn, lưu loát</h3>
+                            <p id="card-example" class="text-indigo-100 italic text-sm md:text-base max-w-lg mx-auto">
+                                "She gave an eloquent speech."
+                            </p>
+                        </div>
+
+                        <div class="text-xs text-indigo-200/80 flex items-center">
+                            <i class="fa-solid fa-rotate mr-1.5"></i> Nhấp để quay lại
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+                <button onclick="prevCard()" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-semibold text-slate-700 dark:text-slate-200 text-sm shadow-sm transition-colors">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Trước
+                </button>
+                <button onclick="nextCard()" class="px-5 py-2.5 rounded-xl bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-semibold text-sm shadow-md shadow-indigo-100 dark:shadow-none transition-colors">
+                    Tiếp <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- SECTION 2: KHO TỪ VỰNG THEO THƯ MỤC & THỜI GIAN -->
+        <section id="sec-dictionary" class="hidden space-y-6">
+            
+            <!-- Quản lý Thư Mục -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-lg shadow-slate-100 dark:shadow-none transition-colors">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center">
+                        <i class="fa-solid fa-folder-plus text-indigo-600 dark:text-indigo-400 mr-2"></i> Thư mục / Chủ đề học
+                    </h3>
+                    <button onclick="toggleFolderModal()" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-indigo-600 dark:text-indigo-300 font-semibold text-xs rounded-xl transition-colors">
+                        + Tạo thư mục mới
+                    </button>
+                </div>
+
+                <div id="folder-chips" class="flex space-x-2 overflow-x-auto pb-2">
+                    <!-- Dynamic Folder Chips -->
+                </div>
+            </div>
+
+            <!-- Form Thêm Từ Mới -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-lg shadow-slate-100 dark:shadow-none transition-colors">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center">
+                    <i class="fa-solid fa-circle-plus text-indigo-600 dark:text-indigo-400 mr-2"></i> Thêm từ mới vào kho
+                </h3>
+                <form id="add-word-form" onsubmit="addWord(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="input-word" placeholder="Từ tiếng Anh (VD: Serendipity)" required class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-phonetic" placeholder="Phiên âm (VD: /ˌser.ənˈdɪp.ə.ti/)" required class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-meaning" placeholder="Nghĩa tiếng Việt" required class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="input-example" placeholder="Ví dụ áp dụng" required class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-500">
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Lưu vào thư mục:</label>
+                        <select id="select-folder" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-500">
+                            <!-- Dynamic Options -->
+                        </select>
+                    </div>
+
+                    <button type="submit" class="md:col-span-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors shadow-md shadow-indigo-100 dark:shadow-none">
+                        Lưu từ vựng
+                    </button>
+                </form>
+            </div>
+
+            <!-- Danh Sách Từ Vựng & Bộ Lọc Thời Gian Kho Từ -->
+            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-lg shadow-slate-100 dark:shadow-none transition-colors">
+                
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-700">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">
+                            Danh sách: <span id="current-folder-title" class="text-indigo-600 dark:text-indigo-400">Tất cả từ vựng</span> 
+                            (<span id="dict-count">0</span>)
+                        </h3>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-regular fa-calendar-days text-slate-400 text-sm"></i>
+                        <select id="time-filter" onchange="filterByTime(this.value)" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-indigo-500">
+                            <option value="all">Tất cả thời gian</option>
+                            <option value="today">Hôm nay</option>
+                            <option value="week">7 ngày qua</option>
+                            <option value="month">Tháng này</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="dictionary-list" class="divide-y divide-slate-100 dark:divide-slate-700">
+                    <!-- Dynamic rendering -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: KIỂM TRA TỪ VỰNG -->
+        <section id="sec-test" class="space-y-6 hidden">
+            <!-- Thanh Lọc Thời Gian Kiểm Tra -->
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors">
+                <div class="flex items-center space-x-2 text-slate-700 dark:text-slate-200 text-sm font-semibold">
+                    <i class="fa-solid fa-filter text-indigo-600 dark:text-indigo-400"></i>
+                    <span>Phạm vi từ vựng kiểm tra:</span>
+                </div>
+                <select id="test-time-filter" onchange="changeTestTimeFilter(this.value)" class="w-full sm:w-auto px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-indigo-500">
+                    <option value="all">Toàn bộ thời gian</option>
+                    <option value="today">Hôm nay</option>
+                    <option value="week">7 ngày qua</option>
+                    <option value="month">Tháng này</option>
+                </select>
+            </div>
+
+            <div id="test-container" class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-lg shadow-slate-100 dark:shadow-none space-y-6 transition-colors">
+                <!-- Content generated via JS -->
+            </div>
+        </section>
+
+        <!-- SECTION 4: TÀI KHOẢN -->
+        <section id="sec-profile" class="hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-lg shadow-slate-100 dark:shadow-none text-center space-y-6 transition-colors">
+                <div class="relative w-24 h-24 mx-auto">
+                    <div class="w-full h-full rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                        NV
+                    </div>
+                    <div class="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100" id="profile-name">Nguyễn Văn A</h2>
+                    <p class="text-sm text-slate-400">Học viên EngVibe Premium</p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+                        <p class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400" id="profile-words-count">0</p>
+                        <p class="text-xs text-slate-400 font-medium">Tổng số từ</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+                        <p class="text-2xl font-extrabold text-amber-500" id="profile-folders-count">0</p>
+                        <p class="text-xs text-slate-400 font-medium">Thư mục</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+                        <p class="text-2xl font-extrabold text-emerald-500" id="profile-xp">1250</p>
+                        <p class="text-xs text-slate-400 font-medium">Tổng XP</p>
+                    </div>
+                </div>
+
+                <div class="pt-4 text-left border-t border-slate-100 dark:border-slate-700 space-y-3">
+                    <label class="text-xs font-semibold text-slate-500 dark:text-slate-400">Đổi tên người dùng</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="input-profile-name" placeholder="Nhập tên mới..." class="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-500">
+                        <button onclick="updateProfileName()" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors">Cập nhật</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Tạo Thư Mục Mới -->
+    <div id="modal-folder" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Tạo thư mục chủ đề mới</h3>
+            <input type="text" id="input-new-folder-name" placeholder="Tên thư mục (VD: IELTS, Công sở...)" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 text-sm focus:outline-none focus:border-indigo-500">
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="toggleFolderModal()" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-semibold text-xs hover:bg-slate-200 dark:hover:bg-slate-600">Hủy</button>
+                <button onclick="createNewFolder()" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-xl font-semibold text-xs hover:bg-indigo-700 dark:hover:bg-indigo-600">Tạo mới</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-4 text-center text-xs text-slate-400 transition-colors">
+        <p>© 2026 EngVibe. Kiểm tra từ vựng thông minh theo thời gian.</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // DARK MODE LOGIC
+        let isDarkMode = localStorage.getItem('engvibe_theme') === 'dark';
+
+        function applyTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (isDarkMode) {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun text-sm';
+            } else {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon text-sm';
+            }
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('engvibe_theme', isDarkMode ? 'dark' : 'light');
+            applyTheme();
+        }
+
+        applyTheme();
+
+        // Data Store (LocalStorage)
+        let folders = JSON.parse(localStorage.getItem('engvibe_folders')) || [
+            { id: 'all', name: 'Tất cả từ vựng' },
+            { id: 'f1', name: 'Giao tiếp hàng ngày' },
+            { id: 'f2', name: 'IELTS Academic' }
+        ];
+
+        let vocabularyData = JSON.parse(localStorage.getItem('engvibe_words')) || [
+            { id: 1, folderId: 'f1', word: "Eloquent", phonetic: "/ˈel.ə.kwənt/", meaning: "Hùng hồn, lưu loát", example: "She gave an eloquent speech.", createdAt: new Date().toISOString() },
+            { id: 2, folderId: 'f2', word: "Resilient", phonetic: "/rɪˈzɪl.jənt/", meaning: "Kiên cường, hồi phục nhanh", example: "He is a resilient person.", createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+            { id: 3, folderId: 'f2', word: "Meticulous", phonetic: "/məˈtɪk.jə.ləs/", meaning: "Tỉ mỉ, cẩn thận", example: "She is meticulous in her work.", createdAt: new Date(Date.now() - 86400000 * 10).toISOString() }
+        ];
+
+        let selectedFolderId = 'all';
+        let selectedTimeFilter = 'all'; 
+        let selectedTestTimeFilter = 'all'; // Filter thời gian riêng cho Bài Kiểm Tra
+        let userXP = parseInt(localStorage.getItem('engvibe_xp')) || 1250;
+        let userName = localStorage.getItem('engvibe_username') || "Nguyễn Văn A";
+        let currentCardIndex = 0;
+        let isFlipped = false;
+        let testQuestions = [];
+        let currentTestIndex = 0;
+        let testScore = 0;
+
+        function saveData() {
+            localStorage.setItem('engvibe_folders', JSON.stringify(folders));
+            localStorage.setItem('engvibe_words', JSON.stringify(vocabularyData));
+            localStorage.setItem('engvibe_xp', userXP.toString());
+            localStorage.setItem('engvibe_username', userName);
+        }
+
+        // Navigation Tab Logic
+        function switchTab(tab) {
+            const tabs = ['flashcards', 'dictionary', 'test', 'profile'];
+            tabs.forEach(t => {
+                document.getElementById(`sec-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "px-4 py-2 rounded-xl transition-all duration-200 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100";
+            });
+
+            document.getElementById(`sec-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).className = "px-4 py-2 rounded-xl transition-all duration-200 bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm";
+
+            if (tab === 'dictionary') renderDictionaryView();
+            if (tab === 'test') startTest();
+            if (tab === 'profile') renderProfile();
+            if (tab === 'flashcards') renderCard();
+        }
+
+        // --- FOLDER MANAGEMENT ---
+        function toggleFolderModal() {
+            document.getElementById('modal-folder').classList.toggle('hidden');
+        }
+
+        function createNewFolder() {
+            const nameInput = document.getElementById('input-new-folder-name');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            const newFolder = { id: 'f_' + Date.now(), name };
+            folders.push(newFolder);
+            saveData();
+            
+            nameInput.value = '';
+            toggleFolderModal();
+            renderDictionaryView();
+        }
+
+        function deleteFolder(folderId) {
+            if (folderId === 'all') return;
+            vocabularyData.forEach(item => {
+                if (item.folderId === folderId) item.folderId = 'all';
+            });
+
+            folders = folders.filter(f => f.id !== folderId);
+            if (selectedFolderId === folderId) selectedFolderId = 'all';
+            saveData();
+            renderDictionaryView();
+        }
+
+        function selectFolder(folderId) {
+            selectedFolderId = folderId;
+            renderDictionaryView();
+        }
+
+        function filterByTime(filterValue) {
+            selectedTimeFilter = filterValue;
+            renderDictionaryView();
+        }
+
+        // --- KHO TỪ VỰNG & RENDER ---
+        function renderDictionaryView() {
+            const chipsEl = document.getElementById('folder-chips');
+            chipsEl.innerHTML = '';
+
+            folders.forEach(f => {
+                const isSelected = f.id === selectedFolderId;
+                const chip = document.createElement('div');
+                chip.className = `flex items-center space-x-2 px-4 py-2 rounded-2xl text-xs font-semibold cursor-pointer whitespace-nowrap transition-all ${
+                    isSelected 
+                        ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-md shadow-indigo-100 dark:shadow-none' 
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                }`;
+                chip.onclick = () => selectFolder(f.id);
+                chip.innerHTML = `
+                    <i class="fa-solid fa-folder${isSelected ? '-open' : ''}"></i>
+                    <span>${f.name}</span>
+                    ${f.id !== 'all' ? `<i onclick="event.stopPropagation(); deleteFolder('${f.id}')" class="fa-solid fa-xmark ml-1 hover:text-rose-300"></i>` : ''}
+                `;
+                chipsEl.appendChild(chip);
+            });
+
+            const selectEl = document.getElementById('select-folder');
+            selectEl.innerHTML = '';
+            folders.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name;
+                selectEl.appendChild(opt);
+            });
+
+            let filteredWords = selectedFolderId === 'all' 
+                ? vocabularyData 
+                : vocabularyData.filter(w => w.folderId === selectedFolderId);
+
+            const now = new Date();
+            filteredWords = filteredWords.filter(item => {
+                if (!item.createdAt) return true;
+                const itemDate = new Date(item.createdAt);
+
+                if (selectedTimeFilter === 'today') {
+                    return itemDate.toDateString() === now.toDateString();
+                } else if (selectedTimeFilter === 'week') {
+                    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    return itemDate >= sevenDaysAgo;
+                } else if (selectedTimeFilter === 'month') {
+                    return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+                }
+                return true;
+            });
+
+            const activeFolderName = folders.find(f => f.id === selectedFolderId)?.name || 'Tất cả';
+            document.getElementById('current-folder-title').textContent = activeFolderName;
+            document.getElementById('dict-count').textContent = filteredWords.length;
+
+            const listEl = document.getElementById('dictionary-list');
+            listEl.innerHTML = '';
+
+            if (filteredWords.length === 0) {
+                listEl.innerHTML = `<p class="py-6 text-center text-slate-400 text-sm">Chưa có từ vựng nào khớp với bộ lọc.</p>`;
+                return;
+            }
+
+            filteredWords.forEach(item => {
+                const folderName = folders.find(f => f.id === item.folderId)?.name || 'Chưa phân loại';
+                const createdDate = item.createdAt ? new Date(item.createdAt) : new Date();
+                const formattedDate = `${createdDate.getDate().toString().padStart(2, '0')}/${(createdDate.getMonth() + 1).toString().padStart(2, '0')}/${createdDate.getFullYear()}`;
+
+                const row = document.createElement('div');
+                row.className = "py-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-700/50 px-2 rounded-xl transition-colors";
+                row.innerHTML = `
+                    <div class="space-y-0.5">
+                        <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                            <span class="font-bold text-slate-800 dark:text-slate-100 text-base">${item.word}</span>
+                            <span class="text-xs text-slate-400 font-mono">${item.phonetic}</span>
+                            <span class="text-[10px] bg-indigo-50 dark:bg-indigo-950/60 font-semibold text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full">${folderName}</span>
+                            <span class="text-[10px] bg-slate-100 dark:bg-slate-700 font-medium text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                                <i class="fa-regular fa-clock mr-1"></i>${formattedDate}
+                            </span>
+                        </div>
+                        <p class="text-sm text-indigo-600 dark:text-indigo-400 font-medium">${item.meaning}</p>
+                        <p class="text-xs text-slate-400 italic">"${item.example}"</p>
+                    </div>
+                    <button onclick="deleteWord(${item.id})" class="text-slate-300 dark:text-slate-600 hover:text-rose-500 p-2 transition-colors" title="Xóa từ">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                listEl.appendChild(row);
+            });
+        }
+
+        function addWord(e) {
+            e.preventDefault();
+            const word = document.getElementById('input-word').value.trim();
+            const phonetic = document.getElementById('input-phonetic').value.trim();
+            const meaning = document.getElementById('input-meaning').value.trim();
+            const example = document.getElementById('input-example').value.trim();
+            const folderId = document.getElementById('select-folder').value;
+
+            const newWord = { 
+                id: Date.now(), 
+                folderId, 
+                word, 
+                phonetic, 
+                meaning, 
+                example,
+                createdAt: new Date().toISOString()
+            };
+
+            vocabularyData.unshift(newWord);
+            
+            userXP += 10;
+            saveData();
+            updateXPDisplay();
+
+            document.getElementById('add-word-form').reset();
+            renderDictionaryView();
+        }
+
+        function deleteWord(id) {
+            vocabularyData = vocabularyData.filter(item => item.id !== id);
+            saveData();
+            renderDictionaryView();
+        }
+
+        // --- FLASHCARD SYSTEM ---
+        function renderCard() {
+            const currentWords = selectedFolderId === 'all' 
+                ? vocabularyData 
+                : vocabularyData.filter(w => w.folderId === selectedFolderId);
+
+            const activeFolderName = folders.find(f => f.id === selectedFolderId)?.name || 'Tất cả';
+            document.getElementById('card-folder-tag').textContent = `Chủ đề: ${activeFolderName}`;
+
+            if (currentWords.length === 0) {
+                document.getElementById('card-word').textContent = "Trống";
+                document.getElementById('card-phonetic').textContent = "";
+                document.getElementById('card-meaning').textContent = "Chủ đề này chưa có từ vựng!";
+                document.getElementById('card-example').textContent = "";
+                document.getElementById('card-counter').textContent = "0 / 0";
+                return;
+            }
+
+            if (currentCardIndex >= currentWords.length) currentCardIndex = 0;
+
+            const data = currentWords[currentCardIndex];
+            document.getElementById('card-word').textContent = data.word;
+            document.getElementById('card-phonetic').textContent = data.phonetic;
+            document.getElementById('card-meaning').textContent = data.meaning;
+            document.getElementById('card-example').textContent = `"${data.example}"`;
+            document.getElementById('card-counter').textContent = `Thẻ ${currentCardIndex + 1} / ${currentWords.length}`;
+
+            if (isFlipped) {
+                document.getElementById('flashcard-inner').classList.remove('rotate-y-180');
+                isFlipped = false;
+            }
+        }
+
+        function flipCard() {
+            if (vocabularyData.length === 0) return;
+            isFlipped = !isFlipped;
+            document.getElementById('flashcard-inner').classList.toggle('rotate-y-180', isFlipped);
+        }
+
+        function nextCard() {
+            const currentWords = selectedFolderId === 'all' 
+                ? vocabularyData 
+                : vocabularyData.filter(w => w.folderId === selectedFolderId);
+            if (currentWords.length === 0) return;
+            currentCardIndex = (currentCardIndex + 1) % currentWords.length;
+            renderCard();
+        }
+
+        function prevCard() {
+            const currentWords = selectedFolderId === 'all' 
+                ? vocabularyData 
+                : vocabularyData.filter(w => w.folderId === selectedFolderId);
+            if (currentWords.length === 0) return;
+            currentCardIndex = (currentCardIndex - 1 + currentWords.length) % currentWords.length;
+            renderCard();
+        }
+
+        function speakWord() {
+            const currentWords = selectedFolderId === 'all' 
+                ? vocabularyData 
+                : vocabularyData.filter(w => w.folderId === selectedFolderId);
+            if (currentWords.length === 0) return;
+            const word = currentWords[currentCardIndex].word;
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- KIỂM TRA SYSTEM (THỜI GIAN) ---
+        function changeTestTimeFilter(value) {
+            selectedTestTimeFilter = value;
+            startTest();
+        }
+
+        function startTest() {
+            const container = document.getElementById('test-container');
+            
+            // 1. Lọc từ theo Thư mục được chọn
+            let testWords = selectedFolderId === 'all' 
+                ? [...vocabularyData]
+                : vocabularyData.filter(w => w.folderId === selectedFolderId);
+
+            // 2. Lọc tiếp theo Thời gian được chọn
+            const now = new Date();
+            testWords = testWords.filter(item => {
+                if (!item.createdAt) return true;
+                const itemDate = new Date(item.createdAt);
+
+                if (selectedTestTimeFilter === 'today') {
+                    return itemDate.toDateString() === now.toDateString();
+                } else if (selectedTestTimeFilter === 'week') {
+                    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+                    return itemDate >= sevenDaysAgo;
+                } else if (selectedTestTimeFilter === 'month') {
+                    return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+                }
+                return true; // 'all'
+            });
+
+            if (testWords.length < 2) {
+                container.innerHTML = `
+                    <div class="text-center py-8 space-y-3">
+                        <i class="fa-solid fa-calendar-xmark text-amber-500 text-3xl"></i>
+                        <h3 class="text-lg font-bold text-slate-700 dark:text-slate-200">Không đủ dữ liệu bài test</h3>
+                        <p class="text-sm text-slate-400 max-w-md mx-auto">Bạn cần có ít nhất 2 từ vựng thuộc mốc thời gian này để tạo bài kiểm tra. Hãy đổi mốc thời gian khác hoặc thêm từ vựng mới!</p>
+                        <button onclick="switchTab('dictionary')" class="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-md">
+                            Thêm từ ngay
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            testQuestions = testWords.map(item => {
+                const wrongOptions = vocabularyData
+                    .filter(w => w.id !== item.id)
+                    .map(w => w.meaning);
+                
+                const options = [item.meaning, ...wrongOptions].sort(() => Math.random() - 0.5);
+                return {
+                    word: item.word,
+                    phonetic: item.phonetic,
+                    correctMeaning: item.meaning,
+                    options: options.slice(0, 4)
+                };
+            }).sort(() => Math.random() - 0.5);
+
+            currentTestIndex = 0;
+            testScore = 0;
+            renderTestQuestion();
+        }
+
+        function renderTestQuestion() {
+            const container = document.getElementById('test-container');
+            if (currentTestIndex >= testQuestions.length) {
+                const earnedXP = testScore * 20;
+                userXP += earnedXP;
+                saveData();
+                updateXPDisplay();
+
+                container.innerHTML = `
+                    <div class="text-center py-6 space-y-4">
+                        <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Hoàn thành bài kiểm tra!</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Bạn làm đúng <strong>${testScore} / ${testQuestions.length}</strong> câu.</p>
+                        <div class="inline-block bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold px-4 py-2 rounded-xl text-sm">
+                            +${earnedXP} XP Đã được cộng vào tài khoản
+                        </div>
+                        <div>
+                            <button onclick="startTest()" class="px-6 py-2.5 bg-indigo-600 dark:bg-indigo-500 text-white font-semibold text-sm rounded-xl hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-md">
+                                Làm lại bài test
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const q = testQuestions[currentTestIndex];
+            container.innerHTML = `
+                <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-4">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1 rounded-full">Kiểm tra từ vựng</span>
+                    <span class="text-sm font-semibold text-slate-400">Câu ${currentTestIndex + 1} / ${testQuestions.length}</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400">Nghĩa của từ này là gì?</span>
+                    <h3 class="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-1">${q.word} <span class="text-sm font-normal text-slate-400">${q.phonetic}</span></h3>
+                </div>
+                <div id="test-options" class="grid grid-cols-1 gap-3">
+                    ${q.options.map(opt => `
+                        <button onclick="checkTestAnswer(this, '${opt === q.correctMeaning}')" class="w-full text-left px-5 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 font-medium text-slate-700 dark:text-slate-200 text-sm transition-all flex items-center justify-between">
+                            <span>${opt}</span>
+                            <i class="fa-regular fa-circle text-slate-300 dark:text-slate-600"></i>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function checkTestAnswer(btn, isCorrect) {
+            const container = document.getElementById('test-options');
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+
+            if (isCorrect === 'true') {
+                btn.className = "w-full text-left px-5 py-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-semibold text-sm flex items-center justify-between";
+                btn.querySelector('i').className = "fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400";
+                testScore++;
+            } else {
+                btn.className = "w-full text-left px-5 py-3.5 rounded-2xl border-2 border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 font-semibold text-sm flex items-center justify-between";
+                btn.querySelector('i').className = "fa-solid fa-circle-xmark text-rose-600 dark:text-rose-400";
+            }
+
+            setTimeout(() => {
+                currentTestIndex++;
+                renderTestQuestion();
+            }, 1200);
+        }
+
+        // --- TÀI KHOẢN SYSTEM ---
+        function renderProfile() {
+            document.getElementById('profile-name').textContent = userName;
+            document.getElementById('profile-words-count').textContent = vocabularyData.length;
+            document.getElementById('profile-folders-count').textContent = folders.length - 1;
+            document.getElementById('profile-xp').textContent = userXP;
+        }
+
+        function updateProfileName() {
+            const input = document.getElementById('input-profile-name');
+            if (input.value.trim() !== '') {
+                userName = input.value.trim();
+                saveData();
+                renderProfile();
+                input.value = '';
+            }
+        }
+
+        function updateXPDisplay() {
+            document.getElementById('user-xp').textContent = `${userXP.toLocaleString()} XP`;
+        }
+
+        // App Init
+        renderCard();
+        updateXPDisplay();
+    </script>
+</body>
+</html>
